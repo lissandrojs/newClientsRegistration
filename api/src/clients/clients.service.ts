@@ -3,14 +3,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Client, Prisma } from '@prisma/client';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import validateCPF from './utils';
 
 
 @Injectable()
 export class ClientsService {
   constructor(private dataBase: PrismaService) {}
 
-
   async validateUniqueFields (name,email,cpf){
+    
     const existingCPF = await this.dataBase.client.findUnique({
       where: {
         cpf,
@@ -42,9 +43,12 @@ export class ClientsService {
       }
   }
 
-
   async createClient(createClientDto: CreateClientDto) {
     const { name, email, maritalStatus, cpf, address, phone } = createClientDto;
+    
+    if (validateCPF(cpf) === false  ){
+      throw new ConflictException('CPF inválido.');
+    }
 
     await this.validateUniqueFields(name,email,cpf)
 
@@ -80,7 +84,6 @@ export class ClientsService {
       );
 
       return { client, address: clientAddress, phones: clientPhones };
-
   }
 
   async getClients(): Promise<Client[]> {
