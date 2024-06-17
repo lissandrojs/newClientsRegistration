@@ -9,8 +9,12 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+import { toast } from 'react-toastify';
 
-// Definição do schema de validação usando Zod
+
+const  BASE_URL_API = "http://localhost:3333"
+const BASE_API_CEP = "https://brasilapi.com.br/api/cep/v1/"
+
 const schema = z.object({
   name: z.string().min(1, { message: 'Nome é obrigatório' }),
   email: z.string().email({ message: 'Email inválido' }),
@@ -33,15 +37,28 @@ const Form: React.FC = () => {
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
-  };
 
+  const onSubmit = async (data: FormData) => {
+    try {
+      const response = await axios.post(BASE_URL_API, data);
+  
+      if (response.status === 200) {
+        toast.success('CEP encontrado com sucesso!');
+        console.log(response.data);
+      } else {
+        toast.error('Erro ao buscar CEP. Tente novamente mais tarde.');
+      }
+  
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+      toast.error('Erro ao buscar CEP. Tente novamente mais tarde.');
+    }
+  };
   const handleCepBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
     const cep = event.target.value;
     if (cep.length === 8) {
       try {
-        const response = await axios.get(`https://brasilapi.com.br/api/cep/v1/${cep}`);
+        const response = await axios.get(`${BASE_API_CEP}${cep}`);
         const { street, city, state, neighborhood } = response.data;
         setValue('street', street);
         setValue('city', city);
